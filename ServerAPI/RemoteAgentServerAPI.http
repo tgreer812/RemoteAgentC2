@@ -1,0 +1,42 @@
+@RemoteAgentServerAPI_HostAddress = http://localhost:5148
+
+GET {{RemoteAgentServerAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+GET {{RemoteAgentServerAPI_HostAddress}}/api/agents/
+Accept: application/json
+
+###
+
+GET {{RemoteAgentServerAPI_HostAddress}}/api/tasking/1
+Accept: application/json
+
+###
+
+POST {{RemoteAgentServerAPI_HostAddress}}/api/tasking
+Content-Type: application/json
+
+{
+    "jobs": [
+        {
+            "agentId": 1,
+            "jobType": "PluginJob",
+            "jobData": {
+                "pluginName": "DirectoryListPlugin",
+                "pluginArguments": {
+                    "path": "C:\\Users\\tgree\\source\\repos\\RemoteAgentServerAPI"
+                }
+            }
+        }
+    ]
+}
+
+###
+POST {{RemoteAgentServerAPI_HostAddress}}/api/agents/hello
+Content-Type: application/json
+
+{ 
+    "agentGuid" : "12345678-1234-1234-1234-123456789013" 
+}

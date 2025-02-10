@@ -1,0 +1,107 @@
+# Compiled source code
+*.dll
+*.exe
+*.pdb
+*.obj
+*.suo
+*.sln
+*.xproj
+*.user
+*.cache
+*.AssemblyInfo.cs
+*.tsbuildinfo
+
+# Build outputs
+/bin
+/obj
+/publish
+/app_data
+/logs
+/temp
+
+# NuGet Packages
+/packages
+/artifacts
+/nupkg
+
+# Testing Results
+*.trx
+*.coverage
+*.dat
+
+# Visual Studio specific files
+.vs/
+*.vsproj
+*.vssscc
+*.testsettings
+*.fsproj
+*.cachefile
+*.suo
+*.sdf
+*.opensdf
+*.resharper
+*.DotSettings
+*.userprefs
+
+# Rider specific files (if you use Rider)
+.idea/
+
+# Deployment related
+*.zip
+*.rar
+*.7z
+
+# Environment variables and configuration files (keep these out of version control)
+.env
+appsettings.Development.json  # Or your specific environment config files
+appsettings.Local.json       # For local development settings (never commit)
+*.config
+
+# Other files
+.DS_Store          # macOS
+Thumbs.db          # Windows
+*.swp              # Vim swap files
+*~                 # Backup files
+*.tmp              # Temporary files
+*.bak              # Backup files
+*.log              # Log files (unless you specifically want to track them)
+
+# Folders that can be regenerated
+node_modules/
+bower_components/
+.cache/
+
+# Docker related (if applicable)
+.dockerignore
+
+# IIS Express files
+.vs/config/applicationhost.config
+
+# JetBrains files
+.idea/
+
+# Rider files
+.RiderDirectory
+
+# OpenApi Generated Files (If any)
+/ClientApp/src/api/*
+
+# Project specific ignores - customize as needed
+# Example: If you have a folder with large test files you don't want to commit
+# /TestResults/LargeTestFiles/
+
+# General files you might not want to track
+.gitattributes
+
+# If you use a specific package manager like npm or yarn:
+package-lock.json # npm
+yarn.lock       # yarn
+
+# If you have specific folders for static content (images, etc.) you might want to exclude
+# /wwwroot/images/large_unoptimized_images/  # Example
+
+# If you use a database locally (e.g., SQLite)
+*.db
+*.sqlite
+*.mdf
+*.ldf
