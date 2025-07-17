@@ -7,11 +7,11 @@ namespace RemoteAgentServerAPI.Controllers
 {
     [ApiController]
     [Route("/api/[controller]")]
-    public class AgentsController : Controller
+    public class AgentController : Controller
     {
         private IDatabase _database;
 
-        public AgentsController(IDatabase database)
+        public AgentController(IDatabase database)
         {
             _database = database;
         }

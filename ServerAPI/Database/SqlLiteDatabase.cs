@@ -147,6 +147,32 @@ namespace RemoteAgentServerAPI.Data
             return jobModel;
         }
 
+        public JobModel UpdateJob(JobModel jobModel)
+        {
+            Console.WriteLine($"Updating JobModel in SQLite database (Microsoft.Data.Sqlite) for JobId: {jobModel.JobId}");
+
+            using (var connection = GetConnection())
+            {
+                connection.Open();
+                using (var command = new SqliteCommand(@"
+                            UPDATE JobModels
+                            SET JobResultStatus = @JobResultStatus,
+                                JobOutput = @JobOutput,
+                            WHERE JobId = @JobId;
+                        ", connection))
+                {
+                    command.Parameters.AddWithValue("@JobResultStatus", jobModel.JobResultStatus);
+                    command.Parameters.AddWithValue("@JobOutput", JsonSerializer.Serialize(jobModel.JobOutput)); // Serialize JobOutput to JSON
+
+                    command.ExecuteNonQuery(); // ExecuteNonQuery for UPDATE statements
+                }
+                connection.Close();
+            }
+
+            Console.WriteLine($"JobModel with JobId '{jobModel.JobId}' updated in database.");
+            return jobModel;
+        }
+
         private SqliteConnection GetConnection()
         {
             return new SqliteConnection($"Data Source={_dbFilePath}");

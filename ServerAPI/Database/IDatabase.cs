@@ -48,6 +48,8 @@ namespace RemoteAgentServerAPI.Data
         /// <returns>The saved or updated AgentModel object.</returns>
         AgentModel SaveAgent(AgentModel agent);
 
+        JobModel UpdateJob(JobModel jobModel);
+
         // --- Future methods for other entities can be added here ---
         // Example:
         // Agent? GetAgentById(int id);  // If you had an Agent entity
