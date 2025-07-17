@@ -5,38 +5,49 @@ Accept: application/json
 
 ###
 
-GET {{RemoteAgentServerAPI_HostAddress}}/api/agents/
-Accept: application/json
+# Test the agent hello endpoint (matches agent communication)
+POST {{RemoteAgentServerAPI_HostAddress}}/api/agent/hello
+Content-Type: application/json
+
+{ 
+    "agentGuid" : "12345678-1234-1234-1234-123456789013" 
+}
 
 ###
 
+# Test tasking endpoint for agent ID 1 (matches agent communication)
 GET {{RemoteAgentServerAPI_HostAddress}}/api/tasking/1
 Accept: application/json
 
 ###
 
-POST {{RemoteAgentServerAPI_HostAddress}}/api/tasking
+# Create a job for agent 1 using the correct format
+POST {{RemoteAgentServerAPI_HostAddress}}/api/job
 Content-Type: application/json
 
 {
-    "jobs": [
-        {
-            "agentId": 1,
-            "jobType": "PluginJob",
-            "jobData": {
-                "pluginName": "DirectoryListPlugin",
-                "pluginArguments": {
-                    "path": "C:\\Users\\tgree\\source\\repos\\RemoteAgentServerAPI"
-                }
-            }
+    "agentId": 1,
+    "jobType": "PluginJob",
+    "jobData": {
+        "pluginName": "DirectoryListPlugin",
+        "pluginArguments": {
+            "path": "C:\\Users\\tgree\\source\\repos\\RemoteAgentServerAPI"
         }
-    ]
+    }
 }
 
 ###
-POST {{RemoteAgentServerAPI_HostAddress}}/api/agents/hello
+
+# Test sending job result (matches agent communication)
+PUT {{RemoteAgentServerAPI_HostAddress}}/api/job/1
 Content-Type: application/json
 
-{ 
-    "agentGuid" : "12345678-1234-1234-1234-123456789013" 
+{
+    "correlationId": 1,
+    "status": "Success", 
+    "outputData": {
+        "files": ["file1.txt", "file2.txt"],
+        "directories": ["dir1", "dir2"]
+    },
+    "errorMessage": null
 }

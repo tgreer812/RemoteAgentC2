@@ -76,6 +76,8 @@ namespace RemoteAgentServerAPI.Data
                                 JobType TEXT NOT NULL,
                                 JobData TEXT NOT NULL, -- Store JobData as JSON string
                                 AgentId INTEGER NOT NULL,
+                                JobResultStatus TEXT DEFAULT 'Created',
+                                JobOutput TEXT,
                                 CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
                                 FOREIGN KEY (AgentId) REFERENCES AgentModels(AgentId)
                             );
@@ -97,7 +99,7 @@ namespace RemoteAgentServerAPI.Data
             using (var connection = GetConnection())
             {
                 connection.Open();
-                using (var command = new SqliteCommand("SELECT JobId, JobType, JobData, AgentId, CreatedAt FROM JobModels WHERE JobId = @JobId", connection))
+                using (var command = new SqliteCommand("SELECT JobId, JobType, JobData, AgentId, JobResultStatus, JobOutput, CreatedAt FROM JobModels WHERE JobId = @JobId", connection))
                 {
                     command.Parameters.AddWithValue("@JobId", id);
 
@@ -111,7 +113,9 @@ namespace RemoteAgentServerAPI.Data
                                 JobType = reader.GetString(1),
                                 JobData = JsonSerializer.Deserialize<object>(reader.GetString(2))!, // Deserialize JSON
                                 AgentId = reader.GetInt32(3),
-                                CreatedAt = reader.GetDateTime(4)
+                                JobResultStatus = reader.IsDBNull(4) ? "Created" : reader.GetString(4),
+                                JobOutput = reader.IsDBNull(5) ? null : JsonSerializer.Deserialize<object>(reader.GetString(5)),
+                                CreatedAt = reader.GetDateTime(6)
                             };
                         }
                     }
@@ -157,12 +161,13 @@ namespace RemoteAgentServerAPI.Data
                 using (var command = new SqliteCommand(@"
                             UPDATE JobModels
                             SET JobResultStatus = @JobResultStatus,
-                                JobOutput = @JobOutput,
+                                JobOutput = @JobOutput
                             WHERE JobId = @JobId;
                         ", connection))
                 {
-                    command.Parameters.AddWithValue("@JobResultStatus", jobModel.JobResultStatus);
-                    command.Parameters.AddWithValue("@JobOutput", JsonSerializer.Serialize(jobModel.JobOutput)); // Serialize JobOutput to JSON
+                    command.Parameters.AddWithValue("@JobResultStatus", jobModel.JobResultStatus ?? "Created");
+                    command.Parameters.AddWithValue("@JobOutput", jobModel.JobOutput != null ? JsonSerializer.Serialize(jobModel.JobOutput) : DBNull.Value);
+                    command.Parameters.AddWithValue("@JobId", jobModel.JobId);
 
                     command.ExecuteNonQuery(); // ExecuteNonQuery for UPDATE statements
                 }
@@ -187,7 +192,7 @@ namespace RemoteAgentServerAPI.Data
             {
                 connection.Open();
                 using (var command = new SqliteCommand(
-                    "SELECT JobId, JobType, JobData, AgentId, CreatedAt FROM JobModels WHERE AgentId = @AgentId"
+                    "SELECT JobId, JobType, JobData, AgentId, JobResultStatus, JobOutput, CreatedAt FROM JobModels WHERE AgentId = @AgentId"
                     ,connection
                 ))
                 {
@@ -203,7 +208,9 @@ namespace RemoteAgentServerAPI.Data
                                 JobType = reader.GetString(1),
                                 JobData = JsonSerializer.Deserialize<object>(reader.GetString(2))!, // Deserialize JSON
                                 AgentId = reader.GetInt32(3),
-                                CreatedAt = reader.GetDateTime(4)
+                                JobResultStatus = reader.IsDBNull(4) ? "Created" : reader.GetString(4),
+                                JobOutput = reader.IsDBNull(5) ? null : JsonSerializer.Deserialize<object>(reader.GetString(5)),
+                                CreatedAt = reader.GetDateTime(6)
                             });
                         }
                     }
@@ -320,6 +327,64 @@ namespace RemoteAgentServerAPI.Data
             }
 
             return agentModel;
+        }
+
+        public bool DeleteJob(int jobId)
+        {
+            Console.WriteLine($"Deleting job with ID: {jobId}");
+            
+            using (var connection = GetConnection())
+            {
+                connection.Open();
+                using (var command = new SqliteCommand("DELETE FROM JobModels WHERE JobId = @JobId", connection))
+                {
+                    command.Parameters.AddWithValue("@JobId", jobId);
+                    int rowsAffected = command.ExecuteNonQuery();
+                    connection.Close();
+                    
+                    Console.WriteLine($"Deleted {rowsAffected} job(s) with ID: {jobId}");
+                    return rowsAffected > 0;
+                }
+            }
+        }
+
+        public bool MarkJobsAsSent(List<int> jobIds)
+        {
+            if (jobIds == null || jobIds.Count == 0)
+                return true;
+
+            Console.WriteLine($"Marking {jobIds.Count} jobs as sent");
+            
+            using (var connection = GetConnection())
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var jobId in jobIds)
+                        {
+                            using (var command = new SqliteCommand("UPDATE JobModels SET JobResultStatus = 'Sent' WHERE JobId = @JobId", connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@JobId", jobId);
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        
+                        transaction.Commit();
+                        connection.Close();
+                        
+                        Console.WriteLine($"Successfully marked {jobIds.Count} jobs as sent");
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        Console.WriteLine($"Error marking jobs as sent: {ex.Message}");
+                        return false;
+                    }
+                }
+            }
         }
     }
 }

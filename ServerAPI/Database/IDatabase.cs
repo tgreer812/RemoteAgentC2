@@ -50,6 +50,21 @@ namespace RemoteAgentServerAPI.Data
 
         JobModel UpdateJob(JobModel jobModel);
 
+        /// <summary>
+        /// Deletes a job from the database by its ID.
+        /// </summary>
+        /// <param name="jobId">The ID of the job to delete.</param>
+        /// <returns>True if the job was successfully deleted, false otherwise.</returns>
+        bool DeleteJob(int jobId);
+
+        /// <summary>
+        /// Marks jobs as sent to the agent by updating their status.
+        /// This can be used to prevent resending the same jobs.
+        /// </summary>
+        /// <param name="jobIds">The IDs of the jobs to mark as sent.</param>
+        /// <returns>True if the jobs were successfully updated, false otherwise.</returns>
+        bool MarkJobsAsSent(List<int> jobIds);
+
         // --- Future methods for other entities can be added here ---
         // Example:
         // Agent? GetAgentById(int id);  // If you had an Agent entity

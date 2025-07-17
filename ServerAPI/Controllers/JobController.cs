@@ -6,6 +6,9 @@ using AgentCommon.AgentPluginCommon;
 
 namespace RemoteAgentServerAPI.Controllers
 {
+    /// <summary>
+    /// Controller for managing individual job operations
+    /// </summary>
     [ApiController]
     [Route("/api/[controller]")]
     public class JobController : Controller
@@ -14,10 +17,19 @@ namespace RemoteAgentServerAPI.Controllers
 
         public JobController(IDatabase database)
         {
-            _database = database;
+            _database = database ?? throw new ArgumentNullException(nameof(database));
         }
 
+        /// <summary>
+        /// Gets a specific job by ID
+        /// </summary>
+        /// <param name="id">The job ID to retrieve</param>
+        /// <returns>The job details if found</returns>
+        /// <response code="200">Returns the job details</response>
+        /// <response code="404">If the job is not found</response>
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(JobModel), 200)]
+        [ProducesResponseType(404)]
         public JobModel? Get(int id)
         {
             var job = _database.GetJobById(id);
@@ -29,7 +41,18 @@ namespace RemoteAgentServerAPI.Controllers
             return job;
         }
 
+        /// <summary>
+        /// Creates a new job
+        /// </summary>
+        /// <param name="job">The job to create</param>
+        /// <returns>The created job with assigned ID</returns>
+        /// <response code="200">Returns the created job</response>
+        /// <response code="400">If the job data is invalid</response>
+        /// <response code="500">If there was an error saving the job</response>
         [HttpPost]
+        [ProducesResponseType(typeof(JobModel), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
         public IActionResult Post([FromBody] JobModel job)
         {
             if (job == null)
@@ -74,66 +97,56 @@ namespace RemoteAgentServerAPI.Controllers
             }
         }
 
-/*        [HttpPut("{id}")] // PUT request to update a job, using ID in the route
-        public IActionResult Put(int id, [FromBody] JobModel updatedJob)
+        /// <summary>
+        /// Updates a job with plugin execution results
+        /// </summary>
+        /// <param name="id">The job ID to update</param>
+        /// <param name="result">The plugin execution result</param>
+        /// <returns>Success message or error details</returns>
+        /// <response code="200">If the job was successfully updated</response>
+        /// <response code="400">If the result data is invalid</response>
+        /// <response code="404">If the job is not found</response>
+        /// <response code="500">If there was an error updating the job</response>
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult Put(int id, [FromBody] PluginResult result)
         {
-            if (updatedJob == null)
+            if (result == null)
             {
-                return BadRequest("Request body is missing or invalid."); // Or "Updated job data is required."
-            }
-
-            if (id <= 0) // Validate the ID from the route
-            {
-                return BadRequest("Job ID is invalid. It must be a positive integer.");
-            }
-
-            if (updatedJob.AgentId <= 0) // Validate properties from the body
-            {
-                return BadRequest("Agent ID is required and must be a positive integer.");
-            }
-
-            if (string.IsNullOrEmpty(updatedJob.JobType))
-            {
-                return BadRequest("Job type is required.");
-            }
-
-            if (updatedJob.JobData == null)
-            {
-                return BadRequest("Job data is required.");
+                return BadRequest("Request body is missing or invalid.");
             }
 
             try
             {
                 // Check if the job with the given ID exists in the database
-                var existingJob = _database.GetJobById(id); // Assuming you have a method to get job by ID
+                var existingJob = _database.GetJobById(id);
 
                 if (existingJob == null)
                 {
-                    return NotFound($"Job with ID {id} not found."); // Return 404 if not found
+                    return NotFound($"Job with ID {id} not found.");
                 }
 
-                // Update the existing job with the values from updatedJob
-                // You might choose to update all properties from updatedJob, or selectively update specific ones
-                existingJob.AgentId = updatedJob.AgentId;
-                existingJob.JobType = updatedJob.JobType;
-                existingJob.JobData = updatedJob.JobData;
-                // ... Update other properties as needed from updatedJob to existingJob ...
+                // Update the existing job with the plugin result
+                existingJob.JobResultStatus = result.Status.ToString();
+                existingJob.JobOutput = result.OutputData;
 
-                var isUpdated = _database.UpdateJob(id, existingJob); // Assuming you have an UpdateJob method in your service
+                var updatedJob = _database.UpdateJob(existingJob);
 
-                if (!isUpdated) // Check if the update was successful (UpdateJob might return boolean or updated object)
+                if (updatedJob == null)
                 {
                     return StatusCode(500, $"Failed to update job with ID {id} in the database. Please try again later.");
                 }
 
-                return NoContent(); // 204 No Content - successful update, no response body needed
-                // Alternatively, you could return the updated job with Ok(existingJob); if you want to return the updated resource.
+                return Ok(updatedJob);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"An unexpected error occurred while processing your request to update job ID {id}. Please try again later.");
             }
-        }*/
+        }
 
 
         [HttpPost("/{id}/result")] // POST request to update job result, using ID in the route
